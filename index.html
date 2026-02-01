@@ -60,6 +60,22 @@
           window.location.href = available_endpoints[0];
         }
       })();
+
+      const countdown = () => {
+        let seconds = 3;
+        const interval = setInterval(() => {
+          document.getElementById("countdown").textContent = seconds;
+          document.getElementById("suffix").textContent = "seconds";
+          seconds--;
+        }, 1000);
+        setTimeout(() => {
+          clearInterval(interval);
+          document.getElementById("countdown").textContent = "1";
+          document.getElementById("suffix").textContent = "second";
+        }, seconds * 1000);
+      };
+
+      countdown();
     </script>
     <div
       style="
@@ -72,8 +88,8 @@
         gap: 16px;
       "
     >
-      <span>Wait a moment while we determine the best endpoint...</span>
-      <a href="https://mark9804.netlify.app">Blog</a>
+      <div><span>Wait a moment while we determine the best endpoint in</span> <span id="countdown"></span> <span id="suffix"></span> <span>...</span></div>
+      <div>If you are not being redirected, <a href="https://mark9804.netlify.app">click here</a></div>
     </div>
   </body>
 </html>
