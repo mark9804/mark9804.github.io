@@ -1,81 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>Redirecting...</title>
   </head>
   <body>
     <script>
-      // Simple polifill for Promise.any
-      if (!Promise.any) {
-        Promise.any = (promises) => {
-          return new Promise((resolve, reject) => {
-            let count = 0;
-            const len = promises.length;
-            if (len === 0) reject(new Error("No promises"));
+      const ENDPOINTS = [
+        "netlify.app",
+        "github.io/blog",
+        "vercel.app",
+      ].map(e => "https://mark9804." + e);
 
-            promises.forEach((p) => {
-              Promise.resolve(p)
-                .then(resolve)
-                .catch(() => {
-                  count++;
-                  if (count === len) reject(new Error("All promises rejected"));
-                });
-            });
-          });
-        };
-      }
-
-      const ping = (url, timeout = 3000) => {
-        return new Promise((resolve, reject) => {
+      const ping = (url) =>
+        new Promise((resolve, reject) => {
           const img = new Image();
-          const timer = setTimeout(() => reject("timeout"), timeout);
-
-          img.onload = () => {
+          const timer = setTimeout(reject, 3000);
+          img.onload = img.onerror = () => {
             clearTimeout(timer);
-            resolve(url);
+            img.naturalWidth ? resolve(url) : reject();
           };
-
-          img.onerror = () => {
-            clearTimeout(timer);
-            reject("error");
-          };
-
-          img.src = `${url}/heartbeat.png?v=${Date.now()}`;
+          img.src = url + "/heartbeat.png?v=" + Date.now();
         });
-      };
 
-      const available_endpoints = [
-        "https://mark9804.netlify.app",
-        "https://mark9804.github.io/blog",
-        "https://mark9804.vercel.app",
-      ];
-
-      (async () => {
-        try {
-          const best = await Promise.any(
-            available_endpoints.map((url) => ping(url))
-          );
-          window.location.href = best;
-        } catch (e) { // all promises rejected
-          window.location.href = available_endpoints[0];
-        }
-      })();
-
-      const countdown = () => {
-        let seconds = 3;
-        const interval = setInterval(() => {
-          document.getElementById("countdown").textContent = seconds;
-          document.getElementById("suffix").textContent = "seconds";
-          seconds--;
-        }, 1000);
-        setTimeout(() => {
-          clearInterval(interval);
-          document.getElementById("countdown").textContent = "1";
-          document.getElementById("suffix").textContent = "second";
-        }, seconds * 1000);
-      };
-
-      countdown();
+      Promise.any(ENDPOINTS.map(ping))
+        .catch(() => ENDPOINTS[0])
+        .then((best) => {
+          const path = location.pathname;
+          // github.io serves under /blog, others serve at root
+          const needsPrefix = best.includes("github.io");
+          const normalizedPath = path.startsWith("/blog")
+            ? needsPrefix
+              ? path
+              : path.slice(5)
+            : needsPrefix
+              ? "/blog" + path
+              : path;
+          location.href = best.replace(/\/blog$/, "") + normalizedPath;
+        });
     </script>
     <div
       style="
@@ -88,8 +49,11 @@
         gap: 16px;
       "
     >
-      <div><span>Wait a moment while we determine the best endpoint in</span> <span id="countdown"></span> <span id="suffix"></span> <span>...</span></div>
-      <div>If you are not being redirected, <a href="https://mark9804.netlify.app">click here</a></div>
+      <div>Redirecting to the fastest available mirror...</div>
+      <div>
+        If you are not being redirected,
+        <a href="https://mark9804.netlify.app">click here</a>
+      </div>
     </div>
   </body>
 </html>
